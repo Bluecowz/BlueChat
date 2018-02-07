@@ -1,6 +1,15 @@
 import socket
-from threading import RLock
 from threading import Thread
+
+
+def broadcast_client(message, client):
+    client.sendall(message)
+
+
+def broadcast(message):
+    for derp in clients:
+        send = Thread(target=broadcast_client, args=(message, derp,))
+        send.start()
 
 
 def handle_connection(client):
@@ -8,11 +17,9 @@ def handle_connection(client):
         while True:
             data = client.recv(4096)
             if data:
-                lock.acquire()
-                for x in clients:
-                    x.sendall(data)
+                derp = Thread(target=broadcast, args=(data,))
+                derp.start()
                 print("Data Received: " + data.decode())
-                lock.release()
             else:
                 pass
             # time.sleep(10)
@@ -25,19 +32,19 @@ def output_log(message):
 
 
 # Set the server IP
-ip = "127.0.0.1"
-
+ip = input("Server IP: ")
+if ip == "":
+    ip = '127.0.0.1'
 port = 10000
+
 server_address = (ip, port)
 output_log("Set server IP and port")
 
 # Creates the socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-output_log("Socket created.")
+output_log("Socket created: " + str(ip) + ":" + str(port))
 
 clients = set()
-lock = RLock()
-
 
 try:
     # Bind the socket to the port and begins listening for connections
@@ -48,9 +55,7 @@ try:
         # Accept new connection
         connection, client_address = sock.accept()
         output_log("Accepted new connection")
-        lock.acquire()
         clients.add(connection)
-        lock.release()
 
         try:
             thread = Thread(target=handle_connection, args=(connection,))

@@ -25,6 +25,9 @@ try:
             sock.send(message.encode())
         finally:
             pass
+except ConnectionResetError:
+    sock.close()
+    print("Connection was closed.")
 finally:
     sock.send((username + " disconnected.").encode())
     sock.close()
