@@ -60,6 +60,7 @@ try:
         try:
             thread = Thread(target=handle_connection, args=(connection,))
             thread.start()
+            thread.join()
         except InterruptedError:
             print("Threading error.")
 
